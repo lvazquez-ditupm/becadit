@@ -1,0 +1,34 @@
+{
+  "name": "tfgapp",
+  "version": "1.0.0",
+  "description": "TFG application",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinycarol/TFG.git"
+  },
+  "author": "Carolina Alonso Lopez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tinycarol/TFG/issues"
+  },
+  "homepage": "https://github.com/tinycarol/TFG#readme",
+  "dependencies": {
+    "async": "^2.1.2",
+    "body-parser": "^1.15.1",
+    "chokidar": "^1.6.0",
+    "express": "^4.13.4",
+    "fast-csv": "^2.3.0",
+    "fs": "^0.0.2",
+    "jsonfile": "^2.4.0",
+    "mathjs": "^3.8.1",
+    "moment": "^2.15.1",
+    "multer": "^1.1.0",
+    "opencpu": "^1.0.0",
+    "request": "^2.75.0",
+    "ya-csv": "^0.9.4"
+  }
+}
