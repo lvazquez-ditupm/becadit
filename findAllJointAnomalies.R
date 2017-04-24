@@ -1,91 +1,69 @@
-#' Joint anomaly discovery function for my Bachelor's Thesis
+#' Joint anomaly discovery function for my scolarship
 #'
-#' This function allows you find common anomalies between one variable and all other variables in a dataset.
+#' This function allows you find common anomalies between all variables of the dataset
 #' @param file The absolute path of the dataset.
 #' @param config The absolute path of the config file
 #' @param var1 The name of the main variable
 #' @keywords anomaly anomalies DBSCAN
 #' @export
 #' @examples
-#' findJointAnomalies()
+#' findAllJointAnomalies()
 
-findJointAnomalies <- function(file, config) {
+findAllJointAnomalies <- function(file, configFile) {
   library(jsonlite)
   library(dbscan)
-  config = fromJSON(config)
-  dataInFile <- read.csv(file, header = TRUE, check.names = FALSE)
-  reducedDataSet <- dataInFile
+  config <- fromJSON(configFile)
+  names = config$names
+  dataInFile <- read.csv(file, header = FALSE, col.names = names)
+  reducedDataSet <- dataInFile[complete.cases(dataInFile),]
   types = config$types
   times = config$times
-  names = config$names
-  for (timeType in times) {
-    if (timeType != "Not a timestamp") {
-      var1 = names[match(timeType, times)]
+  areThereAnoms <- matrix(nrow = length(times), ncol = length(times), dimnames = list(names, names))
+  areThereAnoms[,] <- 0
+  for (name in names) {
+    if (times[name] != "Not a timestamp") {
+      var1 = name
       if (types[var1] == "numerical") {
-        normalizedvar1 <-
-          (reducedDataSet[, var1] - min(reducedDataSet[, var1])) / (max(reducedDataSet[, var1]) - min(reducedDataSet[, var1]))
-        
-        reducedDataSet[, var1] <- normalizedvar1
-        
-        minPts <- fromJSON(config)$minPts
-        if (is.null(minPts)) {
-          minPts <- 3
+        if (sd(reducedDataSet[, var1]) == 0) {
+          reducedDataSet[, var1] <- 1
+        } else{
+          normalizedvar1 <-
+            (reducedDataSet[, var1] - min(reducedDataSet[, var1])) / (max(reducedDataSet[, var1]) - min(reducedDataSet[, var1]))
+          reducedDataSet[, var1] <- normalizedvar1
         }
-        names = fromJSON(config)$names
+        minPts <- 3
         others <- names[!(names == var1)]
-        
-        clusters <- reducedDataSet[, others]
-        areThereAnoms <- reducedDataSet[, others]
-        areThereAnoms[, ] <- FALSE
-        anomaliesVars <- reducedDataSet[, 1]
-        var2 <- "temp"
         for (var2 in others) {
           if (types[var2] == "numerical") {
             if (var(reducedDataSet[, var2]) == 0) {
               normalizedvar2 <-  matrix(1, 1, length(reducedDataSet[, var2]))[1, ]
             } else{
               normalizedvar2 <-
-                (reducedDataSet[, var2] - min(reducedDataSet[, var2])) / (max(reducedDataSet[, var2]) -
-                                                                            min(reducedDataSet[, var2]))
+                (reducedDataSet[, var2] - min(reducedDataSet[, var2])) / (max(reducedDataSet[, var2]) - min(reducedDataSet[, var2]))
             }
             reducedDataSet[, var2] <- normalizedvar2
-            eps <- fromJSON(config)$eps
-            if (is.null(eps)) {
-              eps <-
-                sqrt((sd(reducedDataSet[, var1])) ^ 2 + (sd(reducedDataSet[, var2])) ^ 2) / 5.5
-            }
-            
-            clusters[var2] <-
+            eps <-
+              sqrt((sd(reducedDataSet[, var1])) ^ 2 + (sd(reducedDataSet[, var2])) ^ 2) / 5.5
+            clusters <-
               dbscan(reducedDataSet[, c(var1, var2)], eps, minPts, borderPoints = FALSE)$cluster
-          }
-        }
-        
-        #clusters <- optics(reducedDataSet, eps, minPts, eps)$cluster
-        anomaliesByRows <-
-          apply(clusters, 1, function(x)
-            sum(x == 0, na.rm = TRUE))
-        anomaliesByCols <-
-          apply(clusters, 2, function(x)
-            sum(x == 0, na.rm = TRUE))
-        # , indices = rownames(jointAnomalies)
-        areThereAnoms <- clusters == 0
-        for (i in 0:nrow(clusters)) {
-          if (length(others[areThereAnoms[i, ] == TRUE]) > 0) {
-            anomaliesVars[i] <- toString(others[areThereAnoms[i, ] == TRUE])
-          } else{
-            anomaliesVars[i] <- "NONE"
+            clusters2 <- array(0, dim = dim(dataInFile)[1])
+            j <- 1
+            k <- 1
+            for (i in complete.cases(dataInFile)){
+              if(i){
+                clusters2[k] <- clusters[j]
+                j <- j+1
+              }
+              else{
+                clusters2[k] <- 0
+              }
+              k <- k+1
+            }
+            areThereAnoms[var1, var2] <- sum(clusters2 == 0)
           }
         }
       }
     }
-    
-    return(toJSON(
-      list(
-        anomsWithVars = anomaliesVars
-      )
-    ))
-    #  qplot(reducedDataSet[,var1], numberOfAnomalies)
-  } else{
-    return(toJSON(list(error = "Main variable isn't numerical")))
   }
+  return(toJSON(list(anomsMatrix = areThereAnoms, dataset = file)))
 }

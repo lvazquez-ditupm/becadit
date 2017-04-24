@@ -2,7 +2,7 @@ var express = require('express'),
     app = express(),
     bodyParser = require('body-parser'),
     opencpu = require('opencpu'),
-    //watchdog = require('./controllers/watchdog.js'),
+    //watchdog = require('./controllers/watchdog.js');
     btwatchdog = require('./controllers/btwatchdog.js');
 
 app.use(bodyParser.json({ limit: '50mb' }));

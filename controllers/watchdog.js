@@ -10,8 +10,8 @@ var chokidar = require('chokidar'),
     math = require('mathjs');
 
 // Local variables 
-var uploadDir = ".\\uploads\\",
-    storedDataDir = ".\\storedData\\";
+var uploadDir = "./uploads/",
+    storedDataDir = "./storedData/";
 
 // Create watchers
 var uploadsWatcher = chokidar.watch(nodePath.resolve(uploadDir), { // Whole dir watcher
@@ -36,7 +36,8 @@ function saveResults(res, callback) {
     var prevResults = jsonfile.readFile(resultsPath, function(err, obj) {
         if (!err) {
             // File exists: there's results. Read previous anomalies and subtract with current to get new ones.
-            var diff = math.subtract(anoms, obj.newestAnoms);
+            
+            var diff = math.subtract(anoms, obj.newAnoms);
             diff.forEach(function(el, index) {
                 if (el < 0) {
                     diff[index] = 0;
@@ -55,6 +56,7 @@ function saveResults(res, callback) {
                     callback();
                 }
             });
+            filterAnomalies(dataset, diff);
         } else {
             // File doesn't exist: there's no previous results. New anomalies are all current ones.
             jsonfile.writeFile(resultsPath, { anoms: anoms, newAnoms: anoms }, function(err) {
@@ -65,6 +67,7 @@ function saveResults(res, callback) {
                     callback();
                 }
             });
+            filterAnomalies(dataset, anoms);
         }
     })
 }
@@ -550,6 +553,36 @@ function getObjectValues(object, varNames) {
         values.push(object[el]);
     })
     return values.join(",") + "\r";
+}
+
+function filterAnomalies(filePath, matrix){
+    filePath+="";
+    var dirPath = filePath.substring(0, filePath.lastIndexOf("/"));
+    var config = JSON.parse(fs.readFileSync(dirPath + "" + "/config.dharma"));
+    var resultsPath = filePath + "-anomalies.json";
+    var names = config.names;
+    var output = "";
+
+    for (i=0; i<names.length; i++){
+        for (j=0; j<names.length; j++){
+            if(Math.abs(matrix[i][j]) > 0){
+                output+=names[i]+"-"+names[j]+":"+matrix[i][j]+","
+            }
+        }
+    }
+    
+    if(output!==""){
+        
+        output = output.slice(0,-1);
+
+        jsonfile.writeFile(resultsPath, { anomalies : output }, function(err) {
+            if (err) {
+                console.log("Error writing new results to " + nodePath.basename(resultsPath));
+            } else {
+                console.log("Finished writing new results to " + nodePath.basename(resultsPath));
+            }
+        });
+    }
 }
 
 // from http://stackoverflow.com/a/5072145 
