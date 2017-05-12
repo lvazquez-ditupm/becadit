@@ -2,8 +2,10 @@ var express = require('express'),
     app = express(),
     bodyParser = require('body-parser'),
     opencpu = require('opencpu'),
-    //watchdog = require('./controllers/watchdog.js');
-    btwatchdog = require('./controllers/btwatchdog.js');
+    watchdog = require('./controllers/watchdog.js');
+    //btwatchdog = require('./controllers/btwatchdog.js');
+
+
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
@@ -24,5 +26,5 @@ app.use(function(err, req, res) {
 var port = 8080;
 
 var server = app.listen(port, function() {
-    console.log('Working on port ' + port);
+    //console.log('Working on port ' + port);
 })

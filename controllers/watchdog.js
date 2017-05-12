@@ -9,6 +9,11 @@ var chokidar = require('chokidar'),
     jsonfile = require('jsonfile'),
     math = require('mathjs');
 
+
+console.log("TEST")
+
+
+
 // Local variables 
 var uploadDir = "./uploads/",
     storedDataDir = "./storedData/";
@@ -277,16 +282,24 @@ function parseDatasetConfig(dsPath, files, callback) {
         }
     });
 
+
     // Lo he implementado así porque creo que config.times va a ser un objeto y no un array, y no hay filter para objetos. 
     // Cambiar a lo de arriba si no es así y borrar la implementación de Object.filter (al final del todo)
-    var tstamps = Object.filter(config.times, function(el, index) {
+
+    configTimes = []
+
+    for(var x in config.times[0]){
+      configTimes.push(config.times[0][x]);
+    }             
+
+    var tstamps = configTimes.filter(function(el, index) {
         if (el.includes("Not") || el.includes("Unix")) {
             return false;
         } else {
             return true;
         }
     });
-
+  
     async.eachSeries(dataFiles, function(file, callback2) {
         var filePath = dsPath + "" + nodePath.sep + "" + file;
         var formatStream = csv
